@@ -1,0 +1,97 @@
+#!/bin/bash
+# The IMD worker in a box. Run ./box with no arguments for the commands.
+set -euo pipefail
+cd "$(dirname "$0")"
+
+IMAGE=imd-worker-box
+NAME=imd-worker
+VOLUME=imd-worker-home
+
+# Root inside the box only long enough to set the firewall and hand over to the `imd` user
+# (entrypoint.sh); every other capability is dropped, and nothing of the Mac is mounted.
+RUN=(
+  --cap-drop ALL --cap-add NET_ADMIN --cap-add SETUID --cap-add SETGID --cap-add SETPCAP --cap-add CHOWN
+  --security-opt no-new-privileges:true
+  --cpus 4 --memory 6g --pids-limit 2048
+  -v "$VOLUME:/home/imd"
+)
+
+running() { [ "$(docker inspect -f '{{.State.Running}}' "$NAME" 2>/dev/null)" = "true" ]; }
+# What the worker runs on: claude, or claude,grok for Grok beside it on the X work. Kept beside this script.
+runtime() { cat .runtime 2>/dev/null || echo claude; }
+
+case "${1:-}" in
+  build)
+    docker build -t "$IMAGE" .
+    ;;
+  setup)
+    running && { echo "Stop the worker first: ./box stop"; exit 1; }
+    docker run -it --rm "${RUN[@]}" "$IMAGE" sh -c 'imd-box-setup && exec bash'
+    ;;
+  start)
+    running && { echo "Already running. ./box logs to watch it."; exit 0; }
+    docker rm -f "$NAME" >/dev/null 2>&1 || true
+    docker run -d --name "$NAME" --restart unless-stopped "${RUN[@]}" "$IMAGE" imd start --runtime "$(runtime)" --auto-update >/dev/null
+    echo "Started on $(runtime). ./box logs to watch it."
+    ;;
+  stop)
+    docker rm -f "$NAME" >/dev/null 2>&1 && echo "Stopped." || echo "Not running."
+    ;;
+  logs)
+    docker logs -f --tail 100 "$NAME"
+    ;;
+  status)
+    if running; then docker exec -u imd "$NAME" imd doctor; else docker run --rm "${RUN[@]}" "$IMAGE" imd doctor; fi
+    ;;
+  shell)
+    if running; then docker exec -it -u imd "$NAME" bash; else docker run -it --rm "${RUN[@]}" "$IMAGE" bash; fi
+    ;;
+  update)
+    was=$(running && echo yes || echo no)
+    [ "$was" = yes ] && "$0" stop
+    docker build --pull -t "$IMAGE" .
+    docker run --rm "${RUN[@]}" "$IMAGE" imd-box-setup
+    [ "$was" = yes ] && "$0" start || true
+    ;;
+  runtime)
+    want="${2:-}"
+    if [ -z "$want" ]; then echo "Runs on: $(runtime)"; exit 0; fi
+    # A pair needs a worker release that knows it; switching early would stop the worker.
+    if [[ "$want" == *,* ]] && ! docker run --rm "${RUN[@]}" "$IMAGE" imd help 2>/dev/null | grep -q 'claude,grok'; then
+      echo "This worker release can't run $want yet. It arrives with the release after Grok support merges; ./box update then. Still on $(runtime)."
+      exit 1
+    fi
+    echo "$want" > .runtime
+    echo "Runs on: $want"
+    if running; then "$0" stop >/dev/null; "$0" start; fi
+    ;;
+  check)
+    # Proves the walls hold, from inside the box: the same flags the worker runs with. The
+    # router is this Mac's real default gateway, which a plain container can reach.
+    router=$(route -n get default 2>/dev/null | awk '/gateway/ {print $2}')
+    docker run --rm -e ROUTER="${router:-192.168.1.1}" "${RUN[@]}" "$IMAGE" bash -c '
+      pass() { printf "  ok    %s\n" "$1"; }; fail() { printf "  FAIL  %s\n" "$1"; bad=1; }; bad=0
+      [ "$(id -un)" = imd ] && pass "runs as imd, not root" || fail "runs as $(id -un)"
+      grep -q "^CapEff:\s*0*$" /proc/self/status && pass "no capabilities" || fail "has capabilities"
+      ls /Users >/dev/null 2>&1 && fail "can see /Users" || pass "cannot see the Mac'"'"'s files"
+      iptables -F 2>/dev/null && fail "can change the firewall" || pass "cannot change the firewall"
+      timeout 4 bash -c "</dev/tcp/host.docker.internal/3306" 2>/dev/null && fail "can reach the Mac (port 3306)" || pass "cannot reach the Mac"
+      timeout 4 bash -c "</dev/tcp/$ROUTER/80" 2>/dev/null && fail "can reach your router ($ROUTER)" || pass "cannot reach your router ($ROUTER)"
+      curl -fsS -m 10 -o /dev/null https://api.imd.fun/health && pass "reaches the internet (api.imd.fun)" || fail "cannot reach api.imd.fun"
+      exit $bad'
+    ;;
+  *)
+    cat <<'EOF'
+./box build    build the box image
+./box setup    first time: install the worker and Claude Code, sign in, pair
+./box start    run the worker in the background (restarts with Docker)
+./box logs     watch it
+./box status   imd doctor, from inside the box
+./box shell    a shell inside the box
+./box check    prove it cannot see this Mac or reach it
+./box update   rebuild and reinstall the CLIs, keeping logins and pairing
+./box runtime  what it runs on; ./box runtime claude,grok adds Grok for X work
+./box stop     stop the worker
+EOF
+    ;;
+esac
