@@ -10,6 +10,10 @@ The IMD worker in a Docker container, so jobs run on this Mac without seeing it.
 
 What a job can still reach, in any setup: the Claude login inside the box (use a separate Claude account if that matters) and the worker's own device key. Your wallet and seat NFT never live here.
 
+## The app
+
+[IMD Agents](https://github.com/gtmcknight/imd-agents) turns this box on and off from the menu bar or tray, beside every other agent your wallet holds. `menubar/` here is the earlier Mac-only app.
+
 ## First time
 
 ```sh
