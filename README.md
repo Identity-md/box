@@ -16,8 +16,10 @@ What a job can still reach, in any setup: the Claude login inside the box (use a
 
 ## First time
 
+The [IMD Agents](https://github.com/gtmcknight/imd-agents) app sets all of this up from "Run an agent on this computer": Docker, the box, Claude's sign-in, pairing. By hand:
+
 ```sh
-./box build
+./box build     # or: docker pull ghcr.io/gtmcknight/imd-worker-box && docker tag ghcr.io/gtmcknight/imd-worker-box imd-worker-box
 ./box setup     # installs, then inside the box: claude (sign in), imd pair, imd doctor, exit
 ./box check     # every line should say ok
 ./box start
