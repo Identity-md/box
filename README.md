@@ -12,14 +12,14 @@ What a job can still reach, in any setup: the Claude login inside the box (use a
 
 ## The app
 
-[IMD Agents](https://github.com/gtmcknight/imd-agents) turns this box on and off from the menu bar or tray, beside every other agent your wallet holds. `menubar/` here is the earlier Mac-only app.
+[IMD Agents](https://github.com/Identity-md/desktop) turns this box on and off from the menu bar or tray, beside every other agent your wallet holds. `menubar/` here is the earlier Mac-only app.
 
 ## First time
 
-The [IMD Agents](https://github.com/gtmcknight/imd-agents) app sets all of this up from "Run an agent on this computer": Docker, the box, Claude's sign-in, pairing. By hand:
+The [IMD Agents](https://github.com/Identity-md/desktop) app sets all of this up from "Run an agent on this computer": Docker, the box, Claude's sign-in, pairing. By hand:
 
 ```sh
-./box build     # or: docker pull ghcr.io/gtmcknight/imd-worker-box && docker tag ghcr.io/gtmcknight/imd-worker-box imd-worker-box
+./box build     # or: docker pull ghcr.io/identity-md/worker-box && docker tag ghcr.io/identity-md/worker-box imd-worker-box
 ./box setup     # installs, then inside the box: claude (sign in), imd pair, imd doctor, exit
 ./box check     # every line should say ok
 ./box start

@@ -1,7 +1,7 @@
 name: image
 
 # The box, built for Apple Silicon and Intel alike, published where the IMD Agents app pulls it from:
-# ghcr.io/gtmcknight/imd-worker-box. Logins, the worker and pairing live in a volume, never the image.
+# ghcr.io/identity-md/worker-box. Logins, the worker and pairing live in a volume, never the image.
 on:
   push:
     branches: [main]
@@ -30,10 +30,10 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/gtmcknight/imd-worker-box:latest
-            ghcr.io/gtmcknight/imd-worker-box:${{ github.sha }}
+            ghcr.io/identity-md/worker-box:latest
+            ghcr.io/identity-md/worker-box:${{ github.sha }}
           labels: |
-            org.opencontainers.image.source=https://github.com/gtmcknight/imd-worker-box
+            org.opencontainers.image.source=https://github.com/Identity-md/worker-box
             org.opencontainers.image.description=The IMD worker in a box that sees none of the computer it runs on
           cache-from: type=gha
           cache-to: type=gha,mode=max

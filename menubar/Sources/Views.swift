@@ -735,7 +735,7 @@ enum Renderer {
             let (name, phase, heartbeat, jobs, step, confirming, showingActivity) = sample
             state.phase = phase; state.heartbeat = heartbeat; state.jobs = jobs; state.step = step
             state.tokenId = "12"
-            let wallet = "0xfe35e15be885750d9b2363cbb6abdd57ac9c4c40"
+            let wallet = "0x1111111111111111111111111111111111111111"
             let local = Agent(tokenId: "12", wallet: wallet, deviceKey: "d5e4", connected: true, stats: stats)
             var mini = name == "fleet-offline" ? miniOffline : name == "fleet-working" ? miniWorking : miniReady
             mini.wallet = wallet
