@@ -43,8 +43,13 @@ installed="$(claude --version 2>/dev/null | head -1)"
 [ "$grok" = no ] || installed="$installed, $(grok --version 2>/dev/null | head -1)"
 echo "Installed: $installed, imd, $(forge --version | head -1)"
 echo
-echo "Next, still in this box:"
-echo "  1. claude              sign in (/login), accept the prompts, then /exit"
-echo "  2. imd pair            pair this box with the wallet that holds your seat NFT"
-echo "  3. imd doctor          check it end to end"
-echo "  4. exit                then run ./box start on the Mac"
+# Whether the first-time steps are still to do, from which files exist; nothing is read.
+if [ -s "$HOME/.claude/.credentials.json" ] && [ -s "$HOME/.identitymd/config.json" ]; then
+  echo "Signed in and paired already."
+else
+  echo "Next, still in this box:"
+  echo "  1. claude              sign in (/login), accept the prompts, then /exit"
+  echo "  2. imd pair            pair this box with the wallet that holds your seat NFT"
+  echo "  3. imd doctor          check it end to end"
+  echo "  4. exit                then run ./box start on the Mac"
+fi
