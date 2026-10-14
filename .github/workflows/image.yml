@@ -6,6 +6,9 @@ on:
   push:
     branches: [main]
     paths: [Dockerfile, entrypoint.sh, setup.sh, install-foundry.sh, .github/workflows/image.yml]
+  # Monthly, so the base image's and Debian's security fixes reach the box without a commit.
+  schedule:
+    - cron: '17 6 1 * *'
   workflow_dispatch:
 
 permissions:
@@ -35,5 +38,7 @@ jobs:
           labels: |
             org.opencontainers.image.source=https://github.com/Identity-md/worker-box
             org.opencontainers.image.description=The IMD worker in a box that sees none of the computer it runs on
+          # The monthly build starts from nothing, or the cached package layer would keep old packages.
+          no-cache: ${{ github.event_name == 'schedule' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
