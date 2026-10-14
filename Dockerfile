@@ -12,6 +12,21 @@ RUN apt-get update \
 COPY install-foundry.sh /tmp/install-foundry.sh
 RUN sh /tmp/install-foundry.sh /opt/foundry/bin && rm /tmp/install-foundry.sh
 
+# A browser for website work: Chrome Headless Shell under Playwright MCP 0.0.82, the version IMD's
+# website skills are written against, with the libraries and fonts it needs to start and draw
+# text. imd-browser is the launcher the worker advertises as its `browser` tool.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      libglib2.0-0 libnspr4 libnss3 libdbus-1-3 libatk1.0-0 libatspi2.0-0 libatk-bridge2.0-0 libcups2 \
+      libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxrandr2 libxkbcommon0 \
+      libgbm1 libasound2 libcairo2 libpango-1.0-0 fontconfig fonts-liberation fonts-noto-color-emoji \
+ && rm -rf /var/lib/apt/lists/*
+COPY browser/package.json browser/package-lock.json /opt/imd-browser/
+RUN cd /opt/imd-browser \
+ && npm ci --omit=dev --no-fund --no-audit \
+ && PLAYWRIGHT_BROWSERS_PATH=/opt/imd-browser/browsers ./node_modules/.bin/playwright install chromium-headless-shell \
+ && rm -rf /root/.npm /tmp/*
+
 # The worker's own user: no sudo, no password, nothing of the host's.
 RUN useradd --create-home --uid 10001 --shell /bin/bash imd
 
@@ -27,7 +42,8 @@ ENV IDENTITYMD_CONTAINER_IS_SANDBOX=1
 
 COPY entrypoint.sh /usr/local/sbin/imd-box-entrypoint
 COPY setup.sh /usr/local/bin/imd-box-setup
-RUN chmod 0755 /usr/local/sbin/imd-box-entrypoint /usr/local/bin/imd-box-setup
+COPY browser/imd-browser.mjs /usr/local/bin/imd-browser
+RUN chmod 0755 /usr/local/sbin/imd-box-entrypoint /usr/local/bin/imd-box-setup /usr/local/bin/imd-browser
 
 WORKDIR /home/imd
 ENTRYPOINT ["/usr/local/sbin/imd-box-entrypoint"]

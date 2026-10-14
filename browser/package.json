@@ -1,0 +1,8 @@
+{
+  "name": "imd-browser",
+  "private": true,
+  "description": "The box's browser tool: Playwright MCP at the version IMD's website skills are written against",
+  "dependencies": {
+    "@playwright/mcp": "0.0.82"
+  }
+}

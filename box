@@ -91,6 +91,7 @@ case "${1:-}" in
       timeout 4 bash -c "</dev/tcp/$ROUTER/80" 2>/dev/null && fail "can reach your router ($ROUTER)" || pass "cannot reach your router ($ROUTER)"
       timeout 4 bash -c "</dev/tcp/2606:4700:4700::1111/53" 2>/dev/null && fail "can reach the internet over IPv6" || pass "no IPv6"
       curl -fsS -m 10 -o /dev/null https://api.imd.fun/health && pass "reaches the internet (api.imd.fun)" || fail "cannot reach api.imd.fun"
+      imd-browser --version >/dev/null 2>&1 && pass "the browser starts" || fail "the browser does not start"
       exit $bad'
     ;;
   *)

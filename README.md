@@ -44,9 +44,13 @@ git pull && ./box update   # rebuild the box, keeping logins and pairing
 
 The worker updates itself between jobs. `./box update` refreshes the rest: Linux, Node and the agent CLIs.
 
+## Website jobs
+
+The box has a browser: Chrome Headless Shell under Playwright MCP 0.0.82, the version IMD's website skills expect. The worker advertises it as its `browser` tool, so website steps come to this box first. A job's site is served inside the box only, on loopback.
+
 ## What it protects
 
-- **Your files.** Nothing from the Mac is mounted. A job sees only the box: no Documents, `.env` files, SSH keys, Keychain or browser.
+- **Your files.** Nothing from the Mac is mounted. A job sees only the box: no Documents, `.env` files, SSH keys, Keychain or your browser.
 - **Your Mac and network.** A firewall set before the worker starts refuses this Mac, the home network, Tailscale, cloud-metadata addresses and all IPv6. Only the internet is reachable, over IPv4.
 - **The firewall itself.** The worker runs as a plain user with no capabilities, so nothing it runs can change the rules.
 - **Your Mac's speed.** The box gets at most 4 CPU cores and 6 GB of memory.

@@ -25,6 +25,19 @@ dir=$(mktemp -d)
 npm install --global --no-fund --no-audit "$dir/identitymd-worker.tgz" >/dev/null
 rm -rf "$dir"
 
+# The image's browser, as the worker's `browser` tool: website steps come to a machine with one
+# first. Everything but running code in the tool's own process and handing it local files.
+echo "Connecting the browser…"
+imd tools add browser --command /usr/local/bin/imd-browser \
+  --enable browser_navigate --enable browser_navigate_back --enable browser_snapshot \
+  --enable browser_take_screenshot --enable browser_resize --enable browser_emulate_media \
+  --enable browser_click --enable browser_hover --enable browser_drag --enable browser_type \
+  --enable browser_press_key --enable browser_fill_form --enable browser_select_option \
+  --enable browser_handle_dialog --enable browser_wait_for --enable browser_find \
+  --enable browser_evaluate --enable browser_console_messages --enable browser_network_requests \
+  --enable browser_network_request --enable browser_tabs --enable browser_close >/dev/null \
+  || echo "The browser isn't connected; website jobs still run, without it."
+
 echo
 installed="$(claude --version 2>/dev/null | head -1)"
 [ "$grok" = no ] || installed="$installed, $(grok --version 2>/dev/null | head -1)"

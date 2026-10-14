@@ -5,7 +5,7 @@ name: image
 on:
   push:
     branches: [main]
-    paths: [Dockerfile, entrypoint.sh, setup.sh, install-foundry.sh, .github/workflows/image.yml]
+    paths: [Dockerfile, entrypoint.sh, setup.sh, install-foundry.sh, browser/**, .github/workflows/image.yml]
   # Monthly, so the base image's and Debian's security fixes reach the box without a commit.
   schedule:
     - cron: '17 6 1 * *'
