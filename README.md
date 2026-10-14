@@ -58,12 +58,10 @@ What a job can still reach: the Claude login inside the box (use a separate Clau
 The same seat can run Grok on the jobs about X while Claude does the rest:
 
 ```sh
-./box update
-./box shell     # then: grok login --device-auth, approve in the browser, exit
-./box runtime claude,grok
+./box runtime claude,grok   # installs Grok, signs it in, restarts the worker on both
 ```
 
-`./box runtime` says so if the installed worker can't run Grok yet. Grok's own sandbox needs the same Linux features as Codex's, so the box is its sandbox: Grok's research reads nothing local.
+It says so if the installed worker can't run Grok yet. Grok is installed only while the worker runs on it. Grok's own sandbox needs the same Linux features as Codex's, so the box is its sandbox: Grok's research reads nothing local.
 
 ## Remove it
 

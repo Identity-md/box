@@ -1,11 +1,20 @@
 #!/bin/sh
 # Installs the worker and the agent CLIs into the box's volume, as the box's user. Safe to run
-# again: it reinstalls the latest of each.
+# again: it reinstalls the latest of each. Grok only while the worker runs on it (IMD_RUNTIME, set by
+# ./box); otherwise a Grok installed earlier is removed and its sign-in kept for next time.
 set -eu
 
-echo "Installing Claude Code and Grok…"
-npm install --global --no-fund --no-audit --allow-scripts=@anthropic-ai/claude-code,@xai-official/grok \
-  @anthropic-ai/claude-code @xai-official/grok >/dev/null
+case "${IMD_RUNTIME:-claude}" in *grok*) grok=yes ;; *) grok=no ;; esac
+
+if [ "$grok" = yes ]; then
+  echo "Installing Claude Code and Grok…"
+  npm install --global --no-fund --no-audit --allow-scripts=@anthropic-ai/claude-code,@xai-official/grok \
+    @anthropic-ai/claude-code @xai-official/grok >/dev/null
+else
+  echo "Installing Claude Code…"
+  npm install --global --no-fund --no-audit --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code >/dev/null
+  if command -v grok >/dev/null 2>&1; then npm uninstall --global @xai-official/grok >/dev/null; fi
+fi
 
 echo "Installing the IMD worker from its latest release, checking its SHA-256…"
 dir=$(mktemp -d)
@@ -17,7 +26,9 @@ npm install --global --no-fund --no-audit "$dir/identitymd-worker.tgz" >/dev/nul
 rm -rf "$dir"
 
 echo
-echo "Installed: $(claude --version 2>/dev/null | head -1), $(grok --version 2>/dev/null | head -1), imd, $(forge --version | head -1)"
+installed="$(claude --version 2>/dev/null | head -1)"
+[ "$grok" = no ] || installed="$installed, $(grok --version 2>/dev/null | head -1)"
+echo "Installed: $installed, imd, $(forge --version | head -1)"
 echo
 echo "Next, still in this box:"
 echo "  1. claude              sign in (/login), accept the prompts, then /exit"

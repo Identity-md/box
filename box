@@ -26,7 +26,7 @@ case "${1:-}" in
     ;;
   setup)
     running && { echo "Stop the worker first: ./box stop"; exit 1; }
-    docker run -it --rm "${RUN[@]}" "$IMAGE" sh -c 'imd-box-setup && exec bash'
+    docker run -it --rm "${RUN[@]}" -e IMD_RUNTIME="$(runtime)" "$IMAGE" sh -c 'imd-box-setup && exec bash'
     ;;
   start)
     running && { echo "Already running. ./box logs to watch it."; exit 0; }
@@ -50,7 +50,7 @@ case "${1:-}" in
     was=$(running && echo yes || echo no)
     [ "$was" = yes ] && "$0" stop
     docker build --pull -t "$IMAGE" .
-    docker run --rm "${RUN[@]}" "$IMAGE" imd-box-setup
+    docker run --rm "${RUN[@]}" -e IMD_RUNTIME="$(runtime)" "$IMAGE" imd-box-setup
     [ "$was" = yes ] && "$0" start || true
     ;;
   runtime)
@@ -61,9 +61,21 @@ case "${1:-}" in
       echo "This worker release can't run $want yet. It arrives with the release after Grok support merges; ./box update then. Still on $(runtime)."
       exit 1
     fi
+    was=$(running && echo yes || echo no)
+    [ "$was" = yes ] && "$0" stop >/dev/null
+    # Grok is installed only for a runtime that uses it, and signed in before the worker starts on it.
+    if [[ "$want" == *grok* ]]; then
+      docker run --rm "${RUN[@]}" -e IMD_RUNTIME="$want" "$IMAGE" imd-box-setup >/dev/null
+      echo "Sign in to Grok: open the link it shows and approve."
+      if ! docker run -it --rm "${RUN[@]}" "$IMAGE" grok login --device-auth; then
+        echo "Grok isn't signed in. Still on $(runtime)."
+        [ "$was" = yes ] && "$0" start
+        exit 1
+      fi
+    fi
     echo "$want" > .runtime
     echo "Runs on: $want"
-    if running; then "$0" stop >/dev/null; "$0" start; fi
+    [ "$was" = yes ] && "$0" start || true
     ;;
   check)
     # Proves the walls hold, from inside the box: the same flags the worker runs with. The
