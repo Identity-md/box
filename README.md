@@ -47,11 +47,11 @@ The worker updates itself between jobs. `./box update` refreshes the rest: Linux
 ## What it protects
 
 - **Your files.** Nothing from the Mac is mounted. A job sees only the box: no Documents, `.env` files, SSH keys, Keychain or browser.
-- **Your Mac and network.** A firewall set before the worker starts refuses this Mac, the home network, Tailscale and cloud-metadata addresses. Only the internet is reachable.
+- **Your Mac and network.** A firewall set before the worker starts refuses this Mac, the home network, Tailscale, cloud-metadata addresses and all IPv6. Only the internet is reachable, over IPv4.
 - **The firewall itself.** The worker runs as a plain user with no capabilities, so nothing it runs can change the rules.
 - **Your Mac's speed.** The box gets at most 4 CPU cores and 6 GB of memory.
 
-What a job can still reach: the Claude login inside the box (use a separate Claude account if that matters) and the worker's own device key. Your wallet and seat NFT never live here. IPv6 for Docker's containers is off unless you turn it on; with it on, the firewall misses your home devices' public IPv6 addresses.
+What a job can still reach: the Claude login inside the box (use a separate Claude account if that matters) and the worker's own device key. Your wallet and seat NFT never live here.
 
 ## Grok beside Claude
 
