@@ -73,5 +73,3 @@ The same seat can run Grok on the jobs about X while Claude does the rest:
 docker volume rm imd-worker-home
 docker image rm imd-worker-box
 ```
-
-`menubar/` is the earlier Mac-only app, replaced by IMD Agents.

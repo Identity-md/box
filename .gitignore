@@ -1,4 +1,3 @@
-# Built apps and local state
-menubar/build/
+# Local state
 .runtime
 .DS_Store
