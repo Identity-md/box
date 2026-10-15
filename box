@@ -12,7 +12,8 @@ VOLUME=imd-worker-home
 # The read jail is Claude's sandbox, built by bubblewrap from user namespaces and its own /proc.
 # seccomp.json is Docker's default profile with the namespace calls allowed without CAP_SYS_ADMIN,
 # and /proc is left unmasked so the jail can mount its own; a namespace's root still cannot touch
-# the box's firewall (./box check proves both).
+# the box's firewall (./box check proves both). IMD Agents keeps a copy (src-tauri/box-seccomp.json):
+# change both.
 RUN=(
   --cap-drop ALL --cap-add NET_ADMIN --cap-add SETUID --cap-add SETGID --cap-add SETPCAP --cap-add CHOWN
   --security-opt no-new-privileges:true
