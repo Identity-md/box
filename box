@@ -9,9 +9,14 @@ VOLUME=imd-worker-home
 
 # Root inside the box only long enough to set the firewall and hand over to the `imd` user
 # (entrypoint.sh); every other capability is dropped, and nothing of the Mac is mounted.
+# The read jail is Claude's sandbox, built by bubblewrap from user namespaces and its own /proc.
+# seccomp.json is Docker's default profile with the namespace calls allowed without CAP_SYS_ADMIN,
+# and /proc is left unmasked so the jail can mount its own; a namespace's root still cannot touch
+# the box's firewall (./box check proves both).
 RUN=(
   --cap-drop ALL --cap-add NET_ADMIN --cap-add SETUID --cap-add SETGID --cap-add SETPCAP --cap-add CHOWN
   --security-opt no-new-privileges:true
+  --security-opt "seccomp=$(pwd)/seccomp.json" --security-opt systempaths=unconfined
   --cpus 4 --memory 6g --pids-limit 2048
   -v "$VOLUME:/home/imd"
 )
@@ -92,6 +97,8 @@ case "${1:-}" in
       timeout 4 bash -c "</dev/tcp/2606:4700:4700::1111/53" 2>/dev/null && fail "can reach the internet over IPv6" || pass "no IPv6"
       curl -fsS -m 10 -o /dev/null https://api.imd.fun/health && pass "reaches the internet (api.imd.fun)" || fail "cannot reach api.imd.fun"
       imd-browser --version >/dev/null 2>&1 && pass "the browser starts" || fail "the browser does not start"
+      bwrap --ro-bind / / --dev /dev --proc /proc --unshare-all --share-net --die-with-parent /bin/true 2>/dev/null && pass "the read jail starts" || fail "the read jail does not start"
+      unshare -Ur iptables -F 2>/dev/null && fail "a jailed root can change the firewall" || pass "a jailed root cannot change the firewall"
       exit $bad'
     ;;
   *)

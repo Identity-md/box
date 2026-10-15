@@ -53,9 +53,10 @@ The box has a browser: Chrome Headless Shell under Playwright MCP 0.0.82, the ve
 - **Your files.** Nothing from the Mac is mounted. A job sees only the box: no Documents, `.env` files, SSH keys, Keychain or your browser.
 - **Your Mac and network.** A firewall set before the worker starts refuses this Mac, the home network, Tailscale, cloud-metadata addresses and all IPv6. Only the internet is reachable, over IPv4.
 - **The firewall itself.** The worker runs as a plain user with no capabilities, so nothing it runs can change the rules.
+- **The box's own logins.** Oracle questions, research and contract builds run in the worker's read jail, Claude's sandbox, which cannot read the box's home: not the Claude login, not the device key.
 - **Your Mac's speed.** The box gets at most 4 CPU cores and 6 GB of memory.
 
-What a job can still reach: the Claude login inside the box (use a separate Claude account if that matters) and the worker's own device key. Your wallet and seat NFT never live here.
+What other jobs can still reach: the Claude login inside the box (use a separate Claude account if that matters) and the worker's own device key. Your wallet and seat NFT never live here.
 
 ## Grok beside Claude
 

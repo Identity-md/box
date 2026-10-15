@@ -2,9 +2,11 @@
 # Mac or the home network, only the internet. Everything it keeps lives in one Docker volume.
 FROM node:24-bookworm-slim
 
-# git and curl for the worker, iptables for the startup firewall, util-linux for setpriv.
+# git and curl for the worker, iptables for the startup firewall, util-linux for setpriv, and
+# bubblewrap and socat for Claude's sandbox: the worker's read jail, which oracle questions,
+# research and contract builds need (seccomp.json lets it start).
 RUN apt-get update \
- && apt-get install -y --no-install-recommends git curl ca-certificates iptables util-linux \
+ && apt-get install -y --no-install-recommends git curl ca-certificates iptables util-linux bubblewrap socat \
  && rm -rf /var/lib/apt/lists/*
 
 # Foundry 1.8.3, the version the network's verifier runs, from the release archive checked
