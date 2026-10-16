@@ -6,7 +6,7 @@ Run your [IMD](https://imd.fun) worker on the Mac you use every day. Jobs run in
 
 - A Mac with [Docker Desktop](https://www.docker.com/products/docker-desktop/) running and about 3 GB free. The worker only takes jobs while the Mac is awake.
 - An IdentityMD seat NFT in a wallet you control. A seat runs one machine at a time.
-- A Claude plan that includes Claude Code. The box signs in on its own, apart from the Mac. Codex can't run here: its sandbox needs Linux features Docker turns off.
+- A Claude plan that includes Claude Code. The box signs in on its own, apart from the Mac. Codex isn't set up in the box.
 
 ## Set it up
 
@@ -66,7 +66,7 @@ The same seat can run Grok on the jobs about X while Claude does the rest:
 ./box runtime claude,grok   # installs Grok, signs it in, restarts the worker on both
 ```
 
-It says so if the installed worker can't run Grok yet. Grok is installed only while the worker runs on it. Grok's own sandbox needs the same Linux features as Codex's, so the box is its sandbox: Grok's research reads nothing local.
+It says so if the installed worker can't run Grok yet. Grok is installed only while the worker runs on it, and its jobs run in the same read jail as Claude's oracle and research work.
 
 ## Remove it
 

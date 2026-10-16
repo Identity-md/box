@@ -38,8 +38,8 @@ ENV NPM_CONFIG_PREFIX=/home/imd/.npm-global \
     PATH=/home/imd/.npm-global/bin:/opt/foundry/bin:$PATH \
     HOME=/home/imd
 
-# This box is Grok's sandbox: its own needs Linux user namespaces, which Docker withholds. The
-# worker honors this only inside a container, and Grok's research then reads nothing local.
+# Tells the worker this box isolates the host: nothing of it mounted, its network firewalled, so
+# imd doctor has no host secrets or container socket to warn about in here.
 ENV IDENTITYMD_CONTAINER_IS_SANDBOX=1
 
 COPY entrypoint.sh /usr/local/sbin/imd-box-entrypoint
