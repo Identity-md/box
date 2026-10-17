@@ -1,7 +1,8 @@
 name: image
 
 # The box, built for Apple Silicon and Intel alike, published where the IMD Agents app pulls it from:
-# ghcr.io/identity-md/worker-box. Logins, the worker and pairing live in a volume, never the image.
+# ghcr.io/identity-md/box, and under its first name, worker-box, for app releases before 0.1.6 that pull it
+# by that name. Logins, the worker and pairing live in a volume, never the image.
 on:
   push:
     branches: [main]
@@ -33,10 +34,12 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
+            ghcr.io/identity-md/box:latest
+            ghcr.io/identity-md/box:${{ github.sha }}
             ghcr.io/identity-md/worker-box:latest
             ghcr.io/identity-md/worker-box:${{ github.sha }}
           labels: |
-            org.opencontainers.image.source=https://github.com/Identity-md/worker-box
+            org.opencontainers.image.source=https://github.com/Identity-md/box
             org.opencontainers.image.description=The IMD worker in a box that sees none of the computer it runs on
           # The monthly build starts from nothing, or the cached package layer would keep old packages.
           no-cache: ${{ github.event_name == 'schedule' }}

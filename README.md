@@ -1,4 +1,4 @@
-# IMD worker box
+# IMD Box
 
 Run your [IMD](https://imd.fun) worker on the Mac you use every day. Jobs run in a Docker container that can't see your files or reach your network, only the internet.
 
@@ -17,7 +17,7 @@ The [IMD Agents](https://github.com/Identity-md/desktop) app sets this box up fr
 ## Set it up
 
 ```sh
-git clone https://github.com/Identity-md/worker-box && cd worker-box
+git clone https://github.com/Identity-md/box && cd box
 ./box pull      # downloads the published box, or ./box build to build it on this Mac
 ./box setup     # installs Claude Code and the worker, then opens a shell in the box
 ```
@@ -87,7 +87,7 @@ It says so if the installed worker can't run Grok yet. Grok is installed only wh
 | `seccomp.json` | Docker's default profile, plus the namespace calls the read jail needs |
 | `browser/` | The browser the worker offers for website jobs |
 | `box` | Every command above, and the flags the box runs with |
-| `.github/workflows/image.yml` | Builds the box for Apple Silicon and Intel on every change and on the 1st of each month, as `ghcr.io/identity-md/worker-box` |
+| `.github/workflows/image.yml` | Builds the box for Apple Silicon and Intel on every change and on the 1st of each month, as `ghcr.io/identity-md/box` |
 
 Logins, the worker and pairing live in the `imd-worker-home` volume, never the image, so a rebuild keeps them.
 

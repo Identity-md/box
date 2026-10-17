@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 IMAGE=imd-worker-box
-PUBLISHED=ghcr.io/identity-md/worker-box:latest
+PUBLISHED=ghcr.io/identity-md/box:latest
 NAME=imd-worker
 VOLUME=imd-worker-home
 
