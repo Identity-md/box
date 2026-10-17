@@ -4,8 +4,12 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 IMAGE=imd-worker-box
+PUBLISHED=ghcr.io/identity-md/worker-box:latest
 NAME=imd-worker
 VOLUME=imd-worker-home
+
+# Four CPUs, or as many as Docker has if fewer: Docker refuses a container that asks for more.
+cpus() { local n; n=$(docker info --format '{{.NCPU}}' 2>/dev/null || echo 4); [[ "$n" =~ ^[0-9]+$ ]] && (( n < 4 )) && echo "$n" || echo 4; }
 
 # Root inside the box only long enough to set the firewall and hand over to the `imd` user
 # (entrypoint.sh); every other capability is dropped, and nothing of the Mac is mounted.
@@ -18,7 +22,7 @@ RUN=(
   --cap-drop ALL --cap-add NET_ADMIN --cap-add SETUID --cap-add SETGID --cap-add SETPCAP --cap-add CHOWN
   --security-opt no-new-privileges:true
   --security-opt "seccomp=$(pwd)/seccomp.json" --security-opt systempaths=unconfined
-  --cpus 4 --memory 6g --pids-limit 2048
+  --cpus "$(cpus)" --memory 6g --pids-limit 2048
   -v "$VOLUME:/home/imd"
 )
 
@@ -29,6 +33,9 @@ runtime() { cat .runtime 2>/dev/null || echo claude; }
 case "${1:-}" in
   build)
     docker build -t "$IMAGE" .
+    ;;
+  pull)
+    docker pull "$PUBLISHED" && docker tag "$PUBLISHED" "$IMAGE" && echo "Downloaded the published box."
     ;;
   setup)
     running && { echo "Stop the worker first: ./box stop"; exit 1; }
@@ -91,7 +98,8 @@ case "${1:-}" in
       pass() { printf "  ok    %s\n" "$1"; }; fail() { printf "  FAIL  %s\n" "$1"; bad=1; }; bad=0
       [ "$(id -un)" = imd ] && pass "runs as imd, not root" || fail "runs as $(id -un)"
       grep -q "^CapEff:\s*0*$" /proc/self/status && pass "no capabilities" || fail "has capabilities"
-      ls /Users >/dev/null 2>&1 && fail "can see /Users" || pass "cannot see the Mac'"'"'s files"
+      mounted=$(cut -d" " -f5 /proc/self/mountinfo | grep -E "^/(Users|Volumes|home|root|mnt|media|srv)" | grep -vx /home/imd)
+      [ -z "$mounted" ] && ! ls /Users >/dev/null 2>&1 && pass "cannot see the Mac'"'"'s files" || fail "can see the Mac'"'"'s files: ${mounted:-/Users}"
       iptables -F 2>/dev/null && fail "can change the firewall" || pass "cannot change the firewall"
       timeout 4 bash -c "</dev/tcp/host.docker.internal/3306" 2>/dev/null && fail "can reach the Mac (port 3306)" || pass "cannot reach the Mac"
       timeout 4 bash -c "</dev/tcp/$ROUTER/80" 2>/dev/null && fail "can reach your router ($ROUTER)" || pass "cannot reach your router ($ROUTER)"
@@ -105,6 +113,7 @@ case "${1:-}" in
   *)
     cat <<'EOF'
 ./box build    build the box image
+./box pull     download the published box instead of building it
 ./box setup    first time: install the worker and Claude Code, sign in, pair
 ./box start    run the worker in the background (restarts with Docker)
 ./box logs     watch it

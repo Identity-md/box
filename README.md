@@ -18,7 +18,7 @@ The [IMD Agents](https://github.com/Identity-md/desktop) app sets this box up fr
 
 ```sh
 git clone https://github.com/Identity-md/worker-box && cd worker-box
-./box build     # builds the image on this Mac
+./box pull      # downloads the published box, or ./box build to build it on this Mac
 ./box setup     # installs Claude Code and the worker, then opens a shell in the box
 ```
 
@@ -45,6 +45,7 @@ If the seat is paired to a worker on this Mac outside the box, run `imd unlink` 
 | `./box status` | `imd doctor` from inside the box: sign-in, pairing, and why it isn't getting work |
 | `./box stop` | Stop it |
 | `git pull && ./box update` | Rebuild the box, keeping logins and pairing |
+| `./box pull` | Download the published box instead of building it |
 | `./box shell` | A shell inside the box |
 | `./box runtime` | What it runs on; `./box runtime claude,grok` adds Grok for X work |
 
@@ -56,7 +57,7 @@ The worker updates itself between jobs. `./box update` refreshes the rest: Linux
 - **Your Mac and network.** A firewall set before the worker starts refuses this Mac, the home network, Tailscale, cloud-metadata addresses and all IPv6. Only the internet is reachable, over IPv4.
 - **The firewall itself.** The worker runs as a plain user with no capabilities, so nothing it runs can change the rules.
 - **The box's own logins.** Oracle questions, research and contract builds run in the worker's read jail, Claude's sandbox, which cannot read the box's home: not the Claude login, not the device key.
-- **Your Mac's speed.** The box gets at most 4 CPU cores and 6 GB of memory.
+- **Your Mac's speed.** The box gets at most 4 CPU cores, or as many as Docker has if fewer, and 6 GB of memory.
 
 What other jobs can still reach: the Claude login inside the box (use a separate Claude account if that matters) and the worker's own device key. Your wallet and seat never live here.
 
