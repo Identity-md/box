@@ -5,7 +5,7 @@
 # Pin the archive as well as the version: foundryup's changing installer and attestation
 # download endpoint have both broken builds while FOUNDRY_VERSION stayed pinned.
 # These SHA-256 digests come from the immutable official release's assets:
-# https://github.com/foundry-rs/foundry/releases/tag/v1.8.3
+# https://github.com/foundry-rs/foundry/releases/tag/v1.9.0
 # Update the version and digests together when upgrading. No installer is fetched or executed.
 set -eu
 
@@ -19,24 +19,24 @@ case "$install_dir" in
   *) echo "Foundry install directory must be absolute" >&2; exit 1 ;;
 esac
 
-version=v1.8.3
+version=v1.9.0
 platform="$(uname -s)/$(uname -m)"
 case "$platform" in
   Linux/x86_64)
     target=linux_amd64
-    sha256=7ca48e6ca3cac1bce1403ca67e5bc1dc3bc1fd818199c9957c7165079c228568
+    sha256=8d17599b42e3139f1a9c171be3798c4ed8e743ae17b84cc3435e57bf2a51ae99
     ;;
   Linux/aarch64|Linux/arm64)
     target=linux_arm64
-    sha256=93fc23be26c8a902ca58fe54aa6ca28c880b58af95d052674933161df7928e6d
+    sha256=22d3060fa83515fb901690a2c59a5f552bd41c241886195b2159562fc4947abc
     ;;
   Darwin/x86_64)
     target=darwin_amd64
-    sha256=1b469229681b31e3c66a07132811b99460b2874a0a48de3b29500234454f47b8
+    sha256=88f234f458652878499d9e363dea37eb06653a948dbe709adef8d8389e0a9025
     ;;
   Darwin/arm64)
     target=darwin_arm64
-    sha256=562f9c2f9094e512f1efc1e005c79de7642c27ffc1e7e9dcf8e31baa54577d6e
+    sha256=38f9af72b266c38ce2e4dfc659ae9cbd1f78c01b34738a76b6c4cb9610579426
     ;;
   *) echo "Unsupported Foundry platform: $platform" >&2; exit 1 ;;
 esac

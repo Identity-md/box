@@ -9,7 +9,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends git curl ca-certificates iptables util-linux bubblewrap socat \
  && rm -rf /var/lib/apt/lists/*
 
-# Foundry 1.8.3, the version the network's verifier runs, from the release archive checked
+# Foundry 1.9.0, the version the network's verifier runs, from the release archive checked
 # against a pinned SHA-256 (the same script the protocol's CI uses).
 COPY install-foundry.sh /tmp/install-foundry.sh
 RUN sh /tmp/install-foundry.sh /opt/foundry/bin && rm /tmp/install-foundry.sh
