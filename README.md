@@ -81,7 +81,7 @@ It says so if the installed worker can't run Grok yet. Grok is installed only wh
 
 | File | What |
 |---|---|
-| `Dockerfile` | Debian with Node 24, git, the firewall tools, bubblewrap and socat for the read jail, Foundry 1.8.3 checked against its SHA-256, and the browser |
+| `Dockerfile` | Debian with Node 24, git, the firewall tools, bubblewrap and socat for the read jail, Foundry 1.9.0 checked against its SHA-256, and the browser |
 | `entrypoint.sh` | Sets the firewall as root, then hands over to the `imd` user with every capability gone |
 | `setup.sh` | Installs Claude Code, and the worker from its latest release after checking its SHA-256, into the box's volume |
 | `seccomp.json` | Docker's default profile, plus the namespace calls the read jail needs |
