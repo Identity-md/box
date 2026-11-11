@@ -35,5 +35,18 @@ fi
 # A fresh volume is owned by root; the user's home must be the user's.
 chown imd:imd /home/imd
 
+# The juror's home is its own user's alone. A volume a box from before the jury made for it is root's and
+# empty: handed over here, its mode first, while root still owns it, as root here can't change another's.
+if [ -d /var/lib/imd-juror ] && [ "$(stat -c %u /var/lib/imd-juror)" = 0 ] && [ -z "$(ls -A /var/lib/imd-juror)" ]; then
+  chmod 0700 /var/lib/imd-juror && chown imd-juror:imd-juror /var/lib/imd-juror
+fi
+
+# The juror, where `imd jury enable` set one up: its supervisor, as root, beside the worker. Only for the
+# worker itself: a one-off box (imd update, pair, help) shares the volumes, and two jurors for one seat
+# would be one too many.
+case "$*" in
+  "imd start"*) if [ -f /opt/imd-juror/install.json ]; then setsid -f /usr/local/sbin/imd-box-juror; fi ;;
+esac
+
 exec setpriv --reuid=imd --regid=imd --init-groups --no-new-privs \
   --inh-caps=-all --ambient-caps=-all --bounding-set=-all -- "$@"

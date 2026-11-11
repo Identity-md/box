@@ -48,6 +48,7 @@ If the seat is paired to a worker on this Mac outside the box, run `imd unlink` 
 | `./box pull` | Download the published box instead of building it |
 | `./box shell` | A shell inside the box |
 | `./box runtime` | What it runs on; `./box runtime claude,grok` adds Grok for X work |
+| `./box jury` | Join IMD's jury: the seat's wallet signs at a link, then a juror runs beside the worker |
 
 The worker updates itself between jobs. `./box update` refreshes the rest: Linux, Node and the agent CLIs.
 
@@ -77,12 +78,17 @@ The same seat can run Grok on the jobs about X while Claude does the rest:
 
 It says so if the installed worker can't run Grok yet. Grok is installed only while the worker runs on it, and its jobs run in the same read jail as Claude's oracle and research work.
 
+## The jury
+
+`./box jury` puts the seat on IMD's jury, which approves what goals do onchain. The juror's key lives with a user of its own, `imd-juror`, in a volume of its own, `imd-juror-home`. The worker and its jobs can't read it, and the juror runs no job. The seat's wallet signs for the key at a link; nothing it signs moves funds. From then on the box starts the juror with the worker and keeps its copy of the worker up to date (`juror.sh`). Its log is at `/run/imd-juror-box.log` in the box.
+
 ## How it's built
 
 | File | What |
 |---|---|
 | `Dockerfile` | Debian with Node 24, git, the firewall tools, bubblewrap and socat for the read jail, Foundry 1.9.0 checked against its SHA-256, and the browser |
-| `entrypoint.sh` | Sets the firewall as root, then hands over to the `imd` user with every capability gone |
+| `entrypoint.sh` | Sets the firewall as root, starts the juror if the seat has one, then hands over to the `imd` user with every capability gone |
+| `juror.sh` | Runs the juror as its own user, as systemd does on a server, and keeps root's copy of the worker up to date |
 | `setup.sh` | Installs Claude Code, and the worker from its latest release after checking its SHA-256, into the box's volume |
 | `seccomp.json` | Docker's default profile, plus the namespace calls the read jail needs |
 | `browser/` | The browser the worker offers for website jobs |
@@ -96,6 +102,6 @@ Logins, the worker and pairing live in the `imd-worker-home` volume, never the i
 ```sh
 ./box stop
 ./box shell     # then: imd unlink, exit. This frees the seat.
-docker volume rm imd-worker-home
+docker volume rm imd-worker-home imd-juror-home imd-juror-code
 docker image rm imd-worker-box
 ```

@@ -32,6 +32,16 @@ RUN cd /opt/imd-browser \
 # The worker's own user: no sudo, no password, nothing of the host's.
 RUN useradd --create-home --uid 10001 --shell /bin/bash imd
 
+# The juror (`imd jury`), for a seat whose holder turns it on: a user of its own that runs the jury loop and
+# no task, so no job can read its key. Its home and root's copy of the worker it runs are volumes of their
+# own, made from these folders the first time; imd-box-juror runs it, as its service does on a server.
+RUN groupadd --system --gid 10002 imd-juror \
+ && useradd --system --uid 10002 --gid imd-juror --home-dir /var/lib/imd-juror --no-create-home \
+      --shell /usr/sbin/nologin --comment "IdentityMD juror" imd-juror \
+ && install -d -o imd-juror -g imd-juror -m 0700 /var/lib/imd-juror \
+ && install -d -o imd-juror -g imd-juror -m 0755 /run/imd-juror \
+ && install -d -m 0755 /opt/imd-juror
+
 # The worker, the agent CLIs and their logins live in the user's home, which is the volume, so
 # they survive a rebuild and the worker's --auto-update can write to its own install.
 ENV NPM_CONFIG_PREFIX=/home/imd/.npm-global \
@@ -45,7 +55,8 @@ ENV IDENTITYMD_CONTAINER_IS_SANDBOX=1
 COPY entrypoint.sh /usr/local/sbin/imd-box-entrypoint
 COPY setup.sh /usr/local/bin/imd-box-setup
 COPY browser/imd-browser.mjs /usr/local/bin/imd-browser
-RUN chmod 0755 /usr/local/sbin/imd-box-entrypoint /usr/local/bin/imd-box-setup /usr/local/bin/imd-browser
+COPY juror.sh /usr/local/sbin/imd-box-juror
+RUN chmod 0755 /usr/local/sbin/imd-box-entrypoint /usr/local/bin/imd-box-setup /usr/local/bin/imd-browser /usr/local/sbin/imd-box-juror
 
 WORKDIR /home/imd
 ENTRYPOINT ["/usr/local/sbin/imd-box-entrypoint"]

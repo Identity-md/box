@@ -30,6 +30,12 @@ RUN=(
   -v "$VOLUME:/home/imd"
 )
 
+# The running worker alone, for the jury (`./box jury`): the juror's home and root's copy of the worker it runs,
+# each a volume of its own, and DAC_READ_SEARCH, with which root's `imd jury enable` and `sync` read the seat and
+# RPC endpoints from the worker's config, a file only the worker's user reads otherwise. Only root's few processes
+# hold it; the worker drops it with every other capability, and the juror runs with none (entrypoint.sh, juror.sh).
+JUROR=(--cap-add DAC_READ_SEARCH -v imd-juror-home:/var/lib/imd-juror -v imd-juror-code:/opt/imd-juror)
+
 running() { [ "$(docker inspect -f '{{.State.Running}}' "$NAME" 2>/dev/null)" = "true" ]; }
 # What the worker runs on: claude, or claude,grok for Grok beside it on the X work. Kept beside this script.
 runtime() { cat .runtime 2>/dev/null || echo claude; }
@@ -48,7 +54,7 @@ case "${1:-}" in
   start)
     running && { echo "Already running. ./box logs to watch it."; exit 0; }
     docker rm -f "$NAME" >/dev/null 2>&1 || true
-    docker run -d --name "$NAME" --restart unless-stopped "${RUN[@]}" "$IMAGE" imd start --runtime "$(runtime)" --auto-update >/dev/null
+    docker run -d --name "$NAME" --restart unless-stopped "${RUN[@]}" "${JUROR[@]}" "$IMAGE" imd start --runtime "$(runtime)" --auto-update >/dev/null
     echo "Started on $(runtime). ./box logs to watch it."
     ;;
   stop)
@@ -56,6 +62,18 @@ case "${1:-}" in
     ;;
   logs)
     docker logs -f --tail 100 "$NAME"
+    ;;
+  jury)
+    # A seat on IMD's jury: root's `imd jury enable` in the running box, with the seat's holder signing at its link,
+    # then the juror beside the worker, which the box starts at each start from then on.
+    running || { echo "Start the worker first: ./box start"; exit 1; }
+    docker inspect -f '{{json .HostConfig.CapAdd}}' "$NAME" | grep -q DAC_READ_SEARCH \
+      || { echo "This box was started before the jury: ./box stop && ./box start, then ./box jury"; exit 1; }
+    if docker exec -it -u root "$NAME" env -i HOME=/root PATH=/home/imd/.npm-global/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/foundry/bin \
+        imd jury enable --worker-user imd; then
+      docker exec -d -u root "$NAME" /usr/local/sbin/imd-box-juror
+      echo "The juror runs beside the worker. Its log: docker exec $NAME cat /run/imd-juror-box.log"
+    fi
     ;;
   status)
     if running; then docker exec -u imd "$NAME" imd doctor; else docker run --rm "${RUN[@]}" "$IMAGE" imd doctor; fi
