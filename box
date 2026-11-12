@@ -37,7 +37,8 @@ RUN=(
 JUROR=(--cap-add DAC_READ_SEARCH -v imd-juror-home:/var/lib/imd-juror -v imd-juror-code:/opt/imd-juror)
 
 running() { [ "$(docker inspect -f '{{.State.Running}}' "$NAME" 2>/dev/null)" = "true" ]; }
-# What the worker runs on: claude, or claude,grok for Grok beside it on the X work. Kept beside this script.
+# What the worker runs on: claude or codex, or either with Grok beside it on the X work (claude,grok). Kept
+# beside this script.
 runtime() { cat .runtime 2>/dev/null || echo claude; }
 
 case "${1:-}" in
@@ -91,6 +92,7 @@ case "${1:-}" in
   runtime)
     want="${2:-}"
     if [ -z "$want" ]; then echo "Runs on: $(runtime)"; exit 0; fi
+    case "$want" in claude|codex|claude,grok|codex,grok) ;; *) echo "Runs on claude, codex, claude,grok or codex,grok. Still on $(runtime)."; exit 1 ;; esac
     # A pair needs a worker release that knows it; switching early would stop the worker.
     if [[ "$want" == *,* ]] && ! docker run --rm "${RUN[@]}" "$IMAGE" imd help 2>/dev/null | grep -q 'claude,grok'; then
       echo "This worker release can't run $want yet. It arrives with the release after Grok support merges; ./box update then. Still on $(runtime)."
@@ -98,15 +100,17 @@ case "${1:-}" in
     fi
     was=$(running && echo yes || echo no)
     [ "$was" = yes ] && "$0" stop >/dev/null
-    # Grok is installed only for a runtime that uses it, and signed in before the worker starts on it.
+    back() { echo "$1 isn't signed in. Still on $(runtime)."; [ "$was" = yes ] && "$0" start; exit 1; }
+    # Codex and Grok are installed only for a runtime that uses them (setup.sh adds and removes them), and signed in
+    # before the worker starts on them.
+    docker run --rm "${RUN[@]}" -e IMD_RUNTIME="$want" "$IMAGE" imd-box-setup >/dev/null
+    if [[ "$want" == codex* ]] && ! docker run --rm "${RUN[@]}" "$IMAGE" test -s /home/imd/.codex/auth.json; then
+      echo "Sign in to Codex with ChatGPT: open the link it shows and enter the code."
+      docker run -it --rm "${RUN[@]}" "$IMAGE" codex login --device-auth || back Codex
+    fi
     if [[ "$want" == *grok* ]]; then
-      docker run --rm "${RUN[@]}" -e IMD_RUNTIME="$want" "$IMAGE" imd-box-setup >/dev/null
       echo "Sign in to Grok: open the link it shows and approve."
-      if ! docker run -it --rm "${RUN[@]}" "$IMAGE" grok login --device-auth; then
-        echo "Grok isn't signed in. Still on $(runtime)."
-        [ "$was" = yes ] && "$0" start
-        exit 1
-      fi
+      docker run -it --rm "${RUN[@]}" "$IMAGE" grok login --device-auth || back Grok
     fi
     echo "$want" > .runtime
     echo "Runs on: $want"
@@ -136,14 +140,14 @@ case "${1:-}" in
     cat <<'EOF'
 ./box build    build the box image
 ./box pull     download the published box instead of building it
-./box setup    first time: install the worker and Claude Code, sign in, pair
+./box setup    first time: install the worker and Claude Code (or Codex), sign in, pair
 ./box start    run the worker in the background (restarts with Docker)
 ./box logs     watch it
 ./box status   imd doctor, from inside the box
 ./box shell    a shell inside the box
 ./box check    prove it cannot see this Mac or reach it
 ./box update   rebuild and reinstall the CLIs, keeping logins and pairing
-./box runtime  what it runs on; ./box runtime claude,grok adds Grok for X work
+./box runtime  what it runs on: ./box runtime codex for Codex, claude,grok adds Grok for X work
 ./box stop     stop the worker
 EOF
     ;;
