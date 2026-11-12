@@ -1,20 +1,29 @@
 #!/bin/sh
 # Installs the worker and the agent CLIs into the box's volume, as the box's user. Safe to run
-# again: it reinstalls the latest of each. Grok only while the worker runs on it (IMD_RUNTIME, set by
-# ./box); otherwise a Grok installed earlier is removed and its sign-in kept for next time.
+# again: it reinstalls the latest of each. Claude Code always; Codex and Grok only while the worker
+# runs on them (IMD_RUNTIME, set by ./box and IMD Agents). One installed earlier and no longer used is
+# removed, its sign-in kept for next time.
 set -eu
 
-case "${IMD_RUNTIME:-claude}" in *grok*) grok=yes ;; *) grok=no ;; esac
+runtime="${IMD_RUNTIME:-claude}"
+case "$runtime" in *codex*) codex=yes ;; *) codex=no ;; esac
+case "$runtime" in *grok*) grok=yes ;; *) grok=no ;; esac
 
-if [ "$grok" = yes ]; then
-  echo "Installing Claude Code and Grok…"
-  npm install --global --no-fund --no-audit --allow-scripts=@anthropic-ai/claude-code,@xai-official/grok \
-    @anthropic-ai/claude-code @xai-official/grok >/dev/null
-else
-  echo "Installing Claude Code…"
-  npm install --global --no-fund --no-audit --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code >/dev/null
-  if command -v grok >/dev/null 2>&1; then npm uninstall --global @xai-official/grok >/dev/null; fi
-fi
+packages="@anthropic-ai/claude-code"
+scripts="@anthropic-ai/claude-code"
+[ "$codex" = no ] || packages="$packages @openai/codex"
+[ "$grok" = no ] || { packages="$packages @xai-official/grok"; scripts="$scripts,@xai-official/grok"; }
+case "$codex$grok" in
+  yesyes) names="Claude Code, Codex and Grok" ;;
+  yesno) names="Claude Code and Codex" ;;
+  noyes) names="Claude Code and Grok" ;;
+  *) names="Claude Code" ;;
+esac
+echo "Installing $names…"
+# shellcheck disable=SC2086 # one package per word
+npm install --global --no-fund --no-audit --allow-scripts="$scripts" $packages >/dev/null
+if [ "$codex" = no ] && command -v codex >/dev/null 2>&1; then npm uninstall --global @openai/codex >/dev/null; fi
+if [ "$grok" = no ] && command -v grok >/dev/null 2>&1; then npm uninstall --global @xai-official/grok >/dev/null; fi
 
 echo "Installing the IMD worker from its latest release, checking its SHA-256…"
 dir=$(mktemp -d)
@@ -40,15 +49,21 @@ imd tools add browser --command /usr/local/bin/imd-browser \
 
 echo
 installed="$(claude --version 2>/dev/null | head -1)"
+[ "$codex" = no ] || installed="$installed, $(codex --version 2>/dev/null | head -1)"
 [ "$grok" = no ] || installed="$installed, $(grok --version 2>/dev/null | head -1)"
 echo "Installed: $installed, imd, $(forge --version | head -1)"
 echo
-# Whether the first-time steps are still to do, from which files exist; nothing is read.
-if [ -s "$HOME/.claude/.credentials.json" ] && [ -s "$HOME/.identitymd/config.json" ]; then
+# Whether the first-time steps are still to do, from which files exist; nothing is read. The sign-in is
+# the one the worker's tasks run on, the first runtime named.
+case "$runtime" in
+  codex*) login="$HOME/.codex/auth.json"; how="codex login --device-auth   sign in with ChatGPT: open the link, enter the code" ;;
+  *) login="$HOME/.claude/.credentials.json"; how="claude              sign in (/login), accept the prompts, then /exit" ;;
+esac
+if [ -s "$login" ] && [ -s "$HOME/.identitymd/config.json" ]; then
   echo "Signed in and paired already."
 else
   echo "Next, still in this box:"
-  echo "  1. claude              sign in (/login), accept the prompts, then /exit"
+  echo "  1. $how"
   echo "  2. imd pair            pair this box with the wallet that holds your seat NFT"
   echo "  3. imd doctor          check it end to end"
   echo "  4. exit                then run ./box start on the Mac"
