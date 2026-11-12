@@ -16,7 +16,7 @@ cpus() { local n; n=$(docker info --format '{{.NCPU}}' 2>/dev/null || echo 4); [
 # The read jail is Claude's sandbox, built by bubblewrap from user namespaces and its own /proc.
 # seccomp.json is Docker's default profile with the namespace calls allowed without CAP_SYS_ADMIN,
 # and /proc is left unmasked so the jail can mount its own; a namespace's root still cannot touch
-# the box's firewall (./box check proves both). IMD Agents keeps a copy (src-tauri/box-seccomp.json):
+# the box's firewall (./box check proves both). IMD Worker keeps a copy (src-tauri/box-seccomp.json):
 # change both.
 # --init starts a small process first, to clear what jobs leave behind: the worker can't, and what
 # Claude's sandbox orphans (bwrap, socat) otherwise piles up, about 50 a day, toward --pids-limit.
