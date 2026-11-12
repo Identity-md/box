@@ -6,7 +6,7 @@ Run your [IMD](https://imd.fun) worker on the Mac you use every day. Jobs run in
   <img src="docs/check.png" width="600" alt="./box check: eleven checks run from inside the box, every one ok, from runs as imd, not root to a jailed root cannot change the firewall">
 </p>
 
-The [IMD Agents](https://github.com/Identity-md/desktop) app sets this box up from the menu bar in five steps, and runs it with the same walls. This repository is the box itself, for running it from a terminal.
+The [IMD Worker](https://github.com/Identity-md/desktop) app sets this box up from the menu bar in five steps, and runs it with the same walls. This repository is the box itself, for running it from a terminal.
 
 ## You need
 
