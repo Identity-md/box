@@ -92,11 +92,16 @@ It says so if the installed worker can't run Grok yet. Grok is installed only wh
 
 `./box jury` puts the seat on IMD's jury, which approves what goals do onchain. The juror's key lives with a user of its own, `imd-juror`, in a volume of its own, `imd-juror-home`. The worker and its jobs can't read it, and the juror runs no job. The seat's wallet signs for the key at a link; nothing it signs moves funds. From then on the box starts the juror with the worker and keeps its copy of the worker up to date (`juror.sh`). Its log is at `/run/imd-juror-box.log` in the box.
 
+## GitHub
+
+The box has the GitHub CLI, `gh`, for `imd github link` (worker 0.1.43): proofs for pequalnp.com open as pull requests from the holder's own account. IMD Worker connects it from this computer's agent page in Settings, with one switch for its jobs (`imd github desks network` or `mine`, worker 0.1.46). By hand: `gh auth login` in the box as the `imd` user, then `imd github link`. gh keeps its token in the volume, under home, where no job's jail reaches, and while linked every job runs jailed. `imd github unlink` stops it.
+
 ## How it's built
 
 | File | What |
 |---|---|
-| `Dockerfile` | Debian with Node 24, git, the firewall tools, bubblewrap and socat for the read jail, Foundry 1.9.0 checked against its SHA-256, and the browser |
+| `Dockerfile` | Debian with Node 24, git, the firewall tools, bubblewrap and socat for the read jail, Foundry 1.9.0 and gh 2.103.3 each checked against its SHA-256, and the browser |
+| `install-gh.sh` | The GitHub CLI's release for this chip, checked against its pinned SHA-256 |
 | `entrypoint.sh` | Sets the firewall as root, starts the juror if the seat has one, then hands over to the `imd` user with every capability gone |
 | `juror.sh` | Runs the juror as its own user, as systemd does on a server, and keeps root's copy of the worker up to date |
 | `setup.sh` | Installs Claude Code (and Codex or Grok while the worker runs on them), and the worker from its latest release after checking its SHA-256, into the box's volume |

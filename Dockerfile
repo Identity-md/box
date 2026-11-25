@@ -14,6 +14,12 @@ RUN apt-get update \
 COPY install-foundry.sh /tmp/install-foundry.sh
 RUN sh /tmp/install-foundry.sh /opt/foundry/bin && rm /tmp/install-foundry.sh
 
+# The GitHub CLI 2.103.3, checked against a pinned SHA-256, for a holder who links their own GitHub
+# account (`imd github link`): the worker opens their proofs' pull requests through it. Its sign-in
+# lives in the volume, under home, where no task's jail reaches.
+COPY install-gh.sh /tmp/install-gh.sh
+RUN sh /tmp/install-gh.sh /usr/local/bin && rm /tmp/install-gh.sh
+
 # A browser for website work: Chrome Headless Shell under Playwright MCP 0.0.82, the version IMD's
 # website skills are written against, with the libraries and fonts it needs to start and draw
 # text. imd-browser is the launcher the worker advertises as its `browser` tool.
